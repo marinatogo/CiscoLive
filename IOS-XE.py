@@ -1,5 +1,7 @@
 import requests
 import base64
+import json
+
 from pprint import pprint
 from datetime import date, datetime
 from dateutil import parser
@@ -10,23 +12,132 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 url_base = 'https://10.88.247.79:443/restconf/'
 
 headers = {
-    'Content-type' : 'application/yang-data+json',
-    'Accept' : 'application/yang-data+json',
+    'Content-type': 'application/yang-data+json',
+    'Accept': 'application/yang-data+json',
 }
 
-auth = ('marintor','7Ring$')
+
+auth = ('marintor', '7Ring$ag')
+
+# url = 'https://10.88.247.78:55443/api/v1/auth/token-services'
+
+# response = requests.post(url, headers=headers, auth=auth, verify=False)
+
+# print(response.status_code)
+# print(response.json())
+
+# Get config
+
+runing_config = f'{url_base}/data/Cisco-IOS-XE-native:native/hostname'
+
+response = requests.get(runing_config, headers=headers,
+                        auth=auth, verify=False)
+
+print(response.status_code)
+
+if (response.status_code):
+    pprint(response.json())
+
+interface_url = f'{url_base}/data/Cisco-IOS-XE-native:native/interface/Tunnel'
+payload = {
+    "Cisco-IOS-XE-native:Tunnel": [
+        {
+            "name": "528",
+            "description": "test 2",
+            "ip": {
+                "address": {
+                    "primary": {
+                        "address": "169.239.241.53",
+                        "mask": "255.255.255.252"
+                    }
+                }
+            }
+        }
+    ]
+}
+
+data = json.dumps(payload, default=str)
+
+response = requests.patch(interface_url, data=data,
+                          auth=auth, verify=False, headers=headers)
+print(response.status_code)
+if response.status_code == 200:
+    pprint(response.json())
+
+# /data/Cisco-IOS-XE-native:native/interface/Tunnel={Tunnel-name}/Cisco-IOS-XE-tunnel:tunnel/destination-config
+tunnel_name = "528"
+# interface_url = f'{url_base}/data/Cisco-IOS-XE-native:native/interface/Tunnel={tunnel_name}'
+interface_url = f'{url_base}/data/Cisco-IOS-XE-native:native/interface/Tunnel'
 
 
-# hostname = open("Filters/17_3_X/hostname.xml").read()
-# config = open("Filters/17_3_X/BGP-690329194.xml").read() # Apply BGP conf 
-# bgp = open("Filters/17_3_X/BGP-690329194-2.xml").read() # Delete BGP conf -> Wrongo 
-# bgp2 = open("Filters/17_3_X/BGP-690329194-3.xml").read() # DElete BGP cong -> Succesfull 
+# Sending payload as customer program
+# payload = {
+#     "Cisco-IOS-XE-native:Tunnel": [
+#         {
+#             "name": "528",
+#             "Cisco-IOS-XE-tunnel:tunnel": {
+#                 "destination": {
+#                     "ipaddress-or-host": "10.241.9.39"
+#                 }
+#             }
+#         }
+#     ]
+# }
 
-###Get config
-# response = requests.get(runnung_config, headers=headers, auth=auth, verify=False)
+# Working config payload
+# payload = {
+#     "Cisco-IOS-XE-native:Tunnel": [
+#         {
+#             "name": "528",
+#             "Cisco-IOS-XE-tunnel:tunnel": {
+#                 "destination-config": {
+#                     "ipv4": "10.241.9.123"
+#                 }
+#             }
+#         }
+#     ]
+# }
 
-# if (response.status_code):
-#     print(response.json())
+payload = {
+    "Cisco-IOS-XE-native:Tunnel": [
+        {
+            "name": "528",
+            "description": "VPNaaS Tunnel for VPN528 - Arix2",
+            "vrf": {
+                "forwarding": "vIPSEC"
+            },
+            "ip": {
+                "address": {
+                    "primary": {
+                        "address": "169.239.241.70",
+                        "mask": "255.255.255.252"
+                    }
+                }
+            },
+            "Cisco-IOS-XE-tunnel:tunnel": {
+                "source": "Loopback528",
+                "destination-config": {
+                    "ipv4": "10.241.9.99"
+                },
+                "vrf-config": {
+                    "vrf-common": {
+                        "vrf": "VPN528"
+                    }
+                }
+
+            }
+        }
+    ]
+}
+
+data = json.dumps(payload, default=str)
+
+response = requests.patch(interface_url, data=data,
+                          auth=auth, verify=False, headers=headers)
+print(response.status_code)
+if response.status_code != 204:
+    pprint(response.json())
+
 
 '''
 def set_status(admin, oper):
@@ -48,7 +159,6 @@ def set_status(admin, oper):
 ### Interfaces
 interfaces = {}
 
-runnung_config = f'{url_base}/data/Cisco-IOS-XE-native:native/'
 interfaces_conf = f'{url_base}data/Cisco-IOS-XE-native:native/interface'
 interfaces_oper_status = f'{url_base}/interfaces/interface/oper-status'
 
@@ -115,13 +225,20 @@ if (response.status_code):
     #last reload reason
     last_r_reason = device_status['last-reboot-reason']
     print(f'\n--- RELOAD REASON ---\n\n{last_r_reason}')
-'''
+
 ### Change hostname
 
 hostname = f'{url_base}/data/Cisco-IOS-XE-native:native/hostname'
-payload = '{\'Cisco-IOS-XE-native:hostname\': \'Marinthor\'}'
+payload = '{\"Cisco-IOS-XE-native:hostname\": \"CSR-Marina\"}'
+response = requests.patch(hostname,  data=payload, headers=headers, auth=auth, verify=False)
+if (response.status_code):
+    print(response.status_code)                                                                                   
 
-response = requests.patch(hostname, data=payload, headers=headers, auth=auth, verify=False)
+### Delete BGP config
+bgp = f'{url_base}/data/Cisco-IOS-XE-native:native/router/Cisco-IOS-XE-bgp:bgp=133937'
+
+response = requests.delete(bgp, headers=headers, auth=auth, verify=False)
 if (response.status_code):
     print(response.status_code)
-    print(response.json())
+    pprint(response.json)
+'''
