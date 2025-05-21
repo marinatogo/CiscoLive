@@ -4,7 +4,7 @@ import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-url_base = 'https://198.18.128.2:443/restconf/'
+url_base = 'https://10.88.247.81:443/restconf/'
 
 headers = {
     'Content-type': 'application/yang-data+json',
@@ -19,5 +19,6 @@ response = requests.get(hostname, headers=headers,auth=auth,verify=False)
 
 if (response.status_code):
     data = response.json()
+    print(data)
     hostname = data.get('Cisco-IOS-XE-native:hostname')
     print(f'The hostname of the router is: {hostname}')

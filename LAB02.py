@@ -25,27 +25,27 @@ def create_neighbor():
     payload = {
         "bgp": [
             {
-            "id": as_number,
-            "address-family": {
-                "no-vrf": {
-                "ipv4": {
-                    "ipv4-unicast": {
-                    "neighbor": {
-                        "id": neighbor_router_id
+                "id": as_number,
+                "address-family": {
+                    "no-vrf": {
+                        "ipv4": {
+                            "ipv4-unicast": {
+                                "neighbor": {
+                                    "id": neighbor_router_id
+                                }
+                            }
+                        }
                     }
+                },
+                "neighbor": {
+                    "id": neighbor_router_id,
+                    "remote-as": remote_as,
+                    "update-source": {
+                        "interface": {
+                            source_interface_type: source_interface_number
+                        }
                     }
                 }
-                }
-            },
-            "neighbor": {
-                "id": neighbor_router_id,
-                "remote-as": remote_as,
-                "update-source": {
-                "interface": {
-                    source_interface_type: source_interface_number
-                }
-                }
-            }
             }
         ]
     }
